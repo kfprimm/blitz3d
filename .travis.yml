@@ -9,7 +9,7 @@ env:
 compiler: clang
 
 before_install:
-  - curl https://github.com/premake/premake-core/releases/download/v5.0.0-alpha10/premake-5.0.0-alpha10-macosx.tar.gz | tar xvz
+  - curl -L https://github.com/premake/premake-core/releases/download/v5.0.0-alpha10/premake-5.0.0-alpha10-macosx.tar.gz | tar xvz
 
 install: make
 
