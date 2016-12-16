@@ -53,11 +53,11 @@ TNode *CastNode::translate( Codegen *g ){
 	}
 	if( expr->sem_type==Type::string_type && sem_type==Type::int_type ){
 		//str->int
-		return call( "__bbStrToInt",t );
+		return d_new TNode( g->callLib( "_bbStrToInt",g->intType(),1,t->value ) );
 	}
 	if( expr->sem_type==Type::int_type && sem_type==Type::string_type ){
 		//int->str
-		return call( "__bbStrFromInt",t );
+		return d_new TNode( g->callLib( "_bbStrFromInt",g->stringType(),1,t->value ) );
 	}
 	if( expr->sem_type==Type::string_type && sem_type==Type::float_type ){
 		//str->float

@@ -51,6 +51,11 @@ void StmtSeqNode::translate( Codegen *g ){
 		StmtNode *stmt=stmts[k];
 		stmt->debug( stmts[k]->pos,g );
 		try{
+			if( g->builder.GetInsertBlock()->getTerminator() ){
+				llvm::BasicBlock *block = llvm::BasicBlock::Create( g->context,"cont",g->builder.GetInsertBlock()->getParent() );
+				g->builder.SetInsertPoint( block );
+			}
+
 			stmt->translate( g );
 		}
 		catch( Ex &x ){
@@ -438,12 +443,13 @@ void ReturnNode::semant( Environ *e ){
 }
 
 void ReturnNode::translate( Codegen *g ){
+	if( !expr ){
+		g->code( d_new TNode( IR_RET,0,0 ) );
+		return;
+	}
+
 	g->builder.CreateRet( expr->translate( g )->value );
-	// if( !expr ){
-	// 	g->code( d_new TNode( IR_RET,0,0 ) );
-	// 	return;
-	// }
-	//
+
 	// TNode *t=expr->translate( g );
 	//
 	// if( expr->sem_type==Type::float_type ){

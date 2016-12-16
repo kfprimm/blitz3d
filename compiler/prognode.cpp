@@ -27,7 +27,7 @@ Environ *ProgNode::semant( Environ *e ){
 }
 
 void ProgNode::translate( Codegen *g,const vector<UserFunc> &usrfuncs ){
-	g->module=new llvm::Module( stmts->file,g->context );
+	g->module=new llvm::Module( fullfilename( stmts->file ),g->context );
 
 	//non-main functions
 	funcs->translate( g );
@@ -64,7 +64,7 @@ void ProgNode::translate( Codegen *g,const vector<UserFunc> &usrfuncs ){
 	//
 	//create locals
 	TNode *t=createVars( g,sem_env );
-
+	g->values.clear();
 	// if( t ) g->code( t );
 	if( g->debug ){
 		// string t=genLabel();
@@ -79,9 +79,9 @@ void ProgNode::translate( Codegen *g,const vector<UserFunc> &usrfuncs ){
 	//program statements
 	stmts->translate( g );
 
-	// //emit return
-	// g->code( ret() );
-	//
+	//emit return
+	g->builder.CreateRetVoid();
+
 	// //check labels
 	// for( k=0;k<sem_env->labels.size();++k ){
 	// 	if( sem_env->labels[k]->def<0 )	ex( "Undefined label '"+sem_env->labels[k]->name+"'",sem_env->labels[k]->ref,stmts->file );
@@ -93,7 +93,6 @@ void ProgNode::translate( Codegen *g,const vector<UserFunc> &usrfuncs ){
 	// if( g->debug ) t=d_new TNode( IR_SEQ,call( "__bbDebugLeave" ),t );
 	if( g->debug ) g->debugLeave();
 	// g->leave( t,0 );
-	g->builder.CreateRetVoid();
 
 	// //structs
 	// structs->translate( g );

@@ -7,7 +7,7 @@
 //////////////////////////////////
 TNode *VarNode::load( Codegen *g ){
 	TNode *t=translate( g );
-	if( sem_type==Type::string_type ) return call( "__bbStrLoad",t );
+	if( sem_type==Type::string_type ) return d_new TNode( g->callLib( "_bbStrLoad",g->stringType(),1,t->value ) );
 	return t;
 }
 
@@ -16,7 +16,8 @@ TNode *VarNode::store( Codegen *g,TNode *n ){
 	if( sem_type->structType() ) return call( "__bbObjStore",t,n );
 	if( sem_type==Type::string_type ) return call( "__bbStrStore",t,n );
 	g->values[t->value->getName().str()]=n->value;
-	return move( n,mem( t ) );
+	g->builder.CreateStore( n->value,t->value );
+	return d_new TNode( t->value );
 }
 
 bool VarNode::isObjParam(){

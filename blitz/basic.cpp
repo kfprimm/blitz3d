@@ -173,8 +173,7 @@ BBStr * BBCALL _bbStrFromFloat( float n ){
 }
 
 BBStr * BBCALL _bbStrConst( const char *s ){
-	cout<<"bbstr*: "<<s<<endl;
-	return (BBStr *)new string( "test" );
+	return d_new BBStr( s );
 }
 
 void * BBCALL _bbVecAlloc( BBVecType *type ){

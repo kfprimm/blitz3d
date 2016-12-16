@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e
+
+blitzpath=_release _release/bin/blitzcc -a $1
+
+clang++ -Lbuild/bin/macos/debug -o a.out test/compiler/test.ll -lruntime.console -lblitz -lstdutil -lm

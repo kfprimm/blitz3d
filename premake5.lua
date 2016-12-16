@@ -264,7 +264,6 @@ project "blitz"
     "blitz/module.h"
   }
 
-
 project "audio"
   kind "StaticLib"
   language "C++"
@@ -395,6 +394,12 @@ project "graphics"
     "graphics/graphics.h", "graphics/graphics.cpp",
     "graphics/canvas.h", "graphics/canvas.cpp"
   }
+
+project "runtime.console"
+  kind "StaticLib"
+  language "C++"
+
+  files "src/runtime/runtime.console/main.cpp"
 
 project "compiler"
   kind "ConsoleApp"

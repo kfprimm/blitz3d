@@ -87,7 +87,6 @@ public:
 	llvm::Function *findFunc( const string &ident ){
 		auto func=module->getFunction( ident );
 		if( !func ){
-
 			Decl *d=env->findFunc( ident );
 			FuncType *f=d->type->funcType();
 
@@ -149,7 +148,6 @@ public:
 	}
 
 	llvm::Value *callLib( const string &ident,llvm::Type *ret,int n_args,... ){
-		cout<<ident<<endl;
 		vector<llvm::Value *> args;
 		va_list ap;
 		va_start( ap,n_args );
@@ -160,6 +158,8 @@ public:
 
 		auto func=module->getFunction( ident );
 		if( !func ){
+			cout<<"lib: "<<ident<<endl;
+
 			vector<llvm::Type *> argTypes;
 			for( uint i=0;i<args.size();i++ ){
 				argTypes.push_back( args[i]->getType() );
