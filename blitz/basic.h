@@ -3,6 +3,7 @@
 #define BASIC_H
 
 #include <string>
+#include "module.h"
 
 enum{
 	BBTYPE_END=0,
@@ -92,6 +93,7 @@ extern BBType _bbFltType;
 extern BBType _bbStrType;
 extern BBType _bbCStrType;
 
+extern "C" {
 BBStr *	 BBCALL _bbStrLoad( BBStr **var );
 void	 BBCALL _bbStrRelease( BBStr *str );
 void	 BBCALL _bbStrStore( BBStr **var,BBStr *str );
@@ -145,5 +147,6 @@ float	 BBCALL _bbFMod( float x,float y );
 float	 BBCALL _bbFPow( float x,float y );
 
 void	 BBCALL bbRuntimeStats();
+}
 
 #endif

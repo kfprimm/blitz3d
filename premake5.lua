@@ -256,8 +256,6 @@ project "blitz"
   kind "StaticLib"
   language "C++"
 
-  removeplatforms { "macos", "linux" }
-
   files {
     "blitz/basic.cpp", "blitz/basic.h",
     "blitz/debug.cpp", "blitz/debug.h",
