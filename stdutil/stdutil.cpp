@@ -3,7 +3,9 @@
 
 #include <set>
 #include <math.h>
-#include <stdlib.h>
+#include <limits.h>
+#include <cstdlib>
+#include <cstring>
 
 using namespace std;
 
@@ -305,19 +307,21 @@ string fullfilename( const string &t ){
 	return string( buff );
 }
 
-// string filenamepath( const string &t ){
-// 	char buff[MAX_PATH+1],*p;
-// 	GetFullPathName( t.c_str(),MAX_PATH,buff,&p );
-// 	if( !p ) return "";
-// 	*p=0;return string(buff);
-// }
-//
-// string filenamefile( const string &t ){
-// 	char buff[MAX_PATH+1],*p;
-// 	GetFullPathName( t.c_str(),MAX_PATH,buff,&p );
-// 	if( !p ) return "";
-// 	return string( p );
-// }
+#ifdef WIN32 // FIXME: port these to POSIX envs.
+string filenamepath( const string &t ){
+	char buff[MAX_PATH+1],*p;
+	GetFullPathName( t.c_str(),MAX_PATH,buff,&p );
+	if( !p ) return "";
+	*p=0;return string(buff);
+}
+
+string filenamefile( const string &t ){
+	char buff[MAX_PATH+1],*p;
+	GetFullPathName( t.c_str(),MAX_PATH,buff,&p );
+	if( !p ) return "";
+	return string( p );
+}
+#endif
 
 const int MIN_SIZE=256;
 
