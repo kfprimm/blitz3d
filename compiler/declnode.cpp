@@ -121,33 +121,67 @@ void FuncDeclNode::semant( Environ *e ){
 
 void FuncDeclNode::translate( Codegen *g ){
 
-	//var offsets
-	int size=enumVars( sem_env );
+	vector<llvm::Type *> args;
 
-	//enter function
-	g->enter( "_f"+ident,size );
+	for( int k=0;k<sem_env->decls->size();++k ){
+		Decl *d=sem_env->decls->decls[k];
+		if( d->kind & DECL_PARAM ){
+			args.push_back( g->findType( d->type ) );
+		}
+	}
 
-	//initialize locals
-	TNode *t=createVars( sem_env );
-	if( t ) g->code( t );
+	auto proto = llvm::FunctionType::get( g->findType( sem_type->returnType ),args,false );
+	auto func=llvm::Function::Create( proto,llvm::Function::InternalLinkage,ident,g->module );
+
+	unsigned k=0;
+	for (auto &arg : func->args()){
+		for( ;k<sem_env->decls->size(); ){
+			Decl *d=sem_env->decls->decls[k];
+			if( d->kind & DECL_PARAM ){
+				arg.setName( d->name );
+				g->values[d->name]=&arg;
+				k++;
+				break;
+			}
+			k++;
+		}
+	}
+
+	llvm::BasicBlock *enter = llvm::BasicBlock::Create( g->context,"entry",func );
+	g->builder.SetInsertPoint( enter );
+
+	// //var offsets
+	// int size=enumVars( sem_env );
+	//
+	// //enter function
+	// g->enter( "_f"+ident,size );
+	//
+	// //initialize locals
+	TNode *t=createVars( g,sem_env );
+	// if( t ) g->code( t );
 	if( g->debug ){
-		string t=genLabel();
-		g->s_data( ident,t );
-		g->code( call( "__bbDebugEnter",local(0),iconst((bint_t)sem_env),global(t) ) );
+	// 	string t=genLabel();
+	// 	g->s_data( ident,t );
+	// 	g->code( call( "__bbDebugEnter",local(0),iconst((bint_t)sem_env),global(t) ) );
+		g->debugEnter();
 	}
 
 	//translate statements
 	stmts->translate( g );
 
-	for( int k=0;k<sem_env->labels.size();++k ){
-		if( sem_env->labels[k]->def<0 )	ex( "Undefined label",sem_env->labels[k]->ref );
-	}
+	// for( int k=0;k<sem_env->labels.size();++k ){
+	// 	if( sem_env->labels[k]->def<0 )	ex( "Undefined label",sem_env->labels[k]->ref );
+	// }
 
 	//leave the function
-	g->label( sem_env->funcLabel+"_leave" );
-	t=deleteVars( sem_env );
-	if( g->debug ) t=d_new TNode( IR_SEQ,call( "__bbDebugLeave" ),t );
-	g->leave( t,sem_type->params->size()*4 );
+	// llvm::BasicBlock *exit = llvm::BasicBlock::Create( g->context,"leave",func );
+	// g->builder.SetInsertPoint( exit );
+
+	// g->label( sem_env->funcLabel+"_leave" );
+	// t=deleteVars( sem_env );
+	// if( g->debug ) t=d_new TNode( IR_SEQ,call( "__bbDebugLeave" ),t );
+	// g->leave( t,sem_type->params->size()*4 );
+	if( g->debug ) g->debugLeave();
 }
 
 //////////////////////

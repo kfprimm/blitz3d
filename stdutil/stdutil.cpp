@@ -295,24 +295,29 @@ string toupper( const string &s ){
 }
 
 string fullfilename( const string &t ){
+#ifdef WIN32
 	char buff[MAX_PATH+1],*p;
 	GetFullPathName( t.c_str(),MAX_PATH,buff,&p );
-	return string(buff);
+#else
+	char buff[PATH_MAX+1];
+	realpath( t.c_str(),buff );
+#endif
+	return string( buff );
 }
 
-string filenamepath( const string &t ){
-	char buff[MAX_PATH+1],*p;
-	GetFullPathName( t.c_str(),MAX_PATH,buff,&p );
-	if( !p ) return "";
-	*p=0;return string(buff);
-}
-
-string filenamefile( const string &t ){
-	char buff[MAX_PATH+1],*p;
-	GetFullPathName( t.c_str(),MAX_PATH,buff,&p );
-	if( !p ) return "";
-	return string( p );
-}
+// string filenamepath( const string &t ){
+// 	char buff[MAX_PATH+1],*p;
+// 	GetFullPathName( t.c_str(),MAX_PATH,buff,&p );
+// 	if( !p ) return "";
+// 	*p=0;return string(buff);
+// }
+//
+// string filenamefile( const string &t ){
+// 	char buff[MAX_PATH+1],*p;
+// 	GetFullPathName( t.c_str(),MAX_PATH,buff,&p );
+// 	if( !p ) return "";
+// 	return string( p );
+// }
 
 const int MIN_SIZE=256;
 

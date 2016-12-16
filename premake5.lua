@@ -241,6 +241,7 @@ project "blitz"
   language "C++"
 
   files {
+    "blitz/basic.cpp", "blitz/basic.h",
     "blitz/debug.cpp", "blitz/debug.h",
     "blitz/env.cpp", "blitz/env.h",
     "blitz/ex.h",
@@ -361,17 +362,22 @@ project "compiler"
   kind "ConsoleApp"
   language "C++"
 
-  removeplatforms { "win64", "macos" }
+  removeplatforms { "win64" }
 
   targetdir "_release/bin"
   targetname "blitzcc"
 
+  LLVM_HOME = (os.getenv("LLVM_HOME") or "/usr/local/opt/llvm")
+
+  buildoptions({ "`" .. LLVM_HOME .. "/bin/llvm-config --cxxflags`", "-w" })
+  linkoptions("`" .. LLVM_HOME .. "/bin/llvm-config --ldflags --link-static --system-libs --libs core`")
+
   files {
     "compiler/main.cpp", "compiler/libs.cpp",
     "compiler/declnode.cpp", "compiler/declnode.h", "compiler/exprnode.cpp", "compiler/exprnode.h", "compiler/node.cpp", "compiler/node.h", "compiler/nodes.h", "compiler/prognode.cpp", "compiler/prognode.h", "compiler/stmtnode.cpp", "compiler/stmtnode.h", "compiler/varnode.cpp", "compiler/varnode.h", "compiler/decl.cpp", "compiler/decl.h", "compiler/environ.cpp", "compiler/environ.h", "compiler/label.h", "compiler/type.cpp", "compiler/type.h", "compiler/parser.cpp", "compiler/parser.h", "compiler/toker.cpp", "compiler/toker.h",
-    "compiler/codegen_x86/codegen_x86.cpp", "compiler/codegen_x86/codegen_x86.h", "compiler/codegen_x86/tile.cpp", "compiler/codegen_x86/tile.h",
+    -- "compiler/codegen_x86/codegen_x86.cpp", "compiler/codegen_x86/codegen_x86.h", "compiler/codegen_x86/tile.cpp", "compiler/codegen_x86/tile.h",
     "compiler/codegen.h",
-    "compiler/assem_x86/asm_insts.cpp", "compiler/assem_x86/assem_x86.cpp", "compiler/assem_x86/assem_x86.h", "compiler/assem_x86/insts.h", "compiler/assem_x86/operand.cpp", "compiler/assem_x86/operand.h",
+    -- "compiler/assem_x86/asm_insts.cpp", "compiler/assem_x86/assem_x86.cpp", "compiler/assem_x86/assem_x86.h", "compiler/assem_x86/insts.h", "compiler/assem_x86/operand.cpp", "compiler/assem_x86/operand.h",
     "compiler/assem.h", "compiler/ex.h", "compiler/std.cpp", "compiler/std.h"
   }
 
@@ -405,8 +411,6 @@ project "linker"
 project "stdutil"
   kind "StaticLib"
   language "C++"
-
-  removeplatforms { "macos" }
 
   files { "stdutil/stdutil.h", "stdutil/stdutil.cpp" }
 

@@ -8,13 +8,14 @@
 TNode *VarNode::load( Codegen *g ){
 	TNode *t=translate( g );
 	if( sem_type==Type::string_type ) return call( "__bbStrLoad",t );
-	return mem( t );
+	return t;
 }
 
 TNode *VarNode::store( Codegen *g,TNode *n ){
 	TNode *t=translate( g );
 	if( sem_type->structType() ) return call( "__bbObjStore",t,n );
 	if( sem_type==Type::string_type ) return call( "__bbStrStore",t,n );
+	g->values[t->value->getName().str()]=n->value;
 	return move( n,mem( t ) );
 }
 
@@ -29,8 +30,9 @@ void DeclVarNode::semant( Environ *e ){
 }
 
 TNode *DeclVarNode::translate( Codegen *g ){
-	if( sem_decl->kind==DECL_GLOBAL ) return global( "_v"+sem_decl->name );
-	return local( sem_decl->offset );
+	return d_new TNode( g->findValue( sem_decl ) );
+	// if( sem_decl->kind==DECL_GLOBAL ) return global( "_v"+sem_decl->name );
+	// return local( sem_decl->offset );
 }
 
 TNode *DeclVarNode::store( Codegen *g,TNode *n ){
@@ -51,7 +53,7 @@ bool DeclVarNode::isObjParam(){
 void IdentVarNode::semant( Environ *e ){
 	if( sem_decl ) return;
 	Type *t=tagType( tag,e );if( !t ) t=Type::int_type;
-	if( sem_decl=e->findDecl( ident ) ){
+	if( (sem_decl=e->findDecl( ident )) ){
 		if( !(sem_decl->kind&(DECL_GLOBAL|DECL_LOCAL|DECL_PARAM)) ){
 			ex( "Identifier '"+sem_decl->name+"' may not be used like this" );
 		}

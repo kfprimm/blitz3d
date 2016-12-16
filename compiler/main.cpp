@@ -25,12 +25,12 @@
 
 using namespace std;
 
-#include "../linker/linker.h"
+// #include "../linker/linker.h"
 #include "../compiler/environ.h"
 #include "../compiler/parser.h"
-#include "../compiler/assem_x86/assem_x86.h"
-#include "../compiler/codegen_x86/codegen_x86.h"
-#include "../bbruntime_dll/bbruntime_dll.h"
+// #include "../compiler/assem_x86/assem_x86.h"
+// #include "../compiler/codegen_x86/codegen_x86.h"
+// #include "../bbruntime_dll/bbruntime_dll.h"
 
 static void showInfo(){
 	const int major=(VERSION&0xffff)/100,minor=(VERSION&0xffff)%100;
@@ -225,7 +225,8 @@ int main( int argc,char *argv[] ){
 
 	ProgNode *prog=0;
 	Environ *env=0;
-	Module *module=0;
+	// Module *module=0;
+	llvm::LLVMContext context;
 
 	try{
 		//parse
@@ -238,23 +239,35 @@ int main( int argc,char *argv[] ){
 		if( !veryquiet ) cout<<"Generating..."<<endl;
 		env=prog->semant( runtimeEnviron );
 
+		prog->dump();
+
 		//translate
 		if( !veryquiet ) cout<<"Translating..."<<endl;
-		qstreambuf qbuf;
-		iostream asmcode( &qbuf );
-		Codegen_x86 codegen( asmcode,debug );
+		Codegen codegen( context,debug );
 
 		prog->translate( &codegen,userFuncs );
 
+		for( auto &func:codegen.module->getFunctionList() ){
+			llvm::verifyFunction( func );
+		}
+
 		if( dumpasm ){
-			cout<<endl<<string( qbuf.data(),qbuf.size() )<<endl;
+			codegen.dump();
+
+			std::string ircode;
+			llvm::raw_string_ostream os( ircode );
+			os << *codegen.module;
+			os.flush();
+
+			ofstream out("test.ll");
+			out << ircode << endl;
 		}
 
 		//assemble
-		if( !veryquiet ) cout<<"Assembling..."<<endl;
-		module=linkerLib->createModule();
-		Assem_x86 assem( asmcode,module );
-		assem.assemble();
+		// if( !veryquiet ) cout<<"Assembling..."<<endl;
+		// module=linkerLib->createModule();
+		// Assem_x86 assem( asmcode,module );
+		// assem.assemble();
 
 	}catch( Ex &x ){
 
@@ -266,36 +279,36 @@ int main( int argc,char *argv[] ){
 
 	delete prog;
 
-	if( out_file.size() ){
-		if( !veryquiet ) cout<<"Creating executable \""<<out_file<<"\"..."<<endl;
-		if( !module->createExe( out_file.c_str(),(home+"/bin/runtime.dll").c_str() ) ){
-			err( "Error creating executable" );
-		}
-	}else if( !compileonly ){
-		void *entry=module->link( runtimeModule );
-		if( !entry ) return 0;
+	// if( out_file.size() ){
+	// 	if( !veryquiet ) cout<<"Creating executable \""<<out_file<<"\"..."<<endl;
+	// 	if( !module->createExe( out_file.c_str(),(home+"/bin/runtime.dll").c_str() ) ){
+	// 		err( "Error creating executable" );
+	// 	}
+	// }else if( !compileonly ){
+	// 	void *entry=module->link( runtimeModule );
+	// 	if( !entry ) return 0;
+  //
+	// 	HMODULE dbgHandle=0;
+	// 	Debugger *debugger=0;
+  //
+	// 	if( debug ){
+	// 		dbgHandle=LoadLibrary( (home+"/bin/debugger.dll").c_str() );
+	// 		if( dbgHandle ){
+	// 			typedef Debugger *(_cdecl*GetDebugger)( Module*,Environ* );
+	// 			GetDebugger gd=(GetDebugger)GetProcAddress( dbgHandle,"debuggerGetDebugger" );
+	// 			if( gd ) debugger=gd( module,env );
+	// 		}
+	// 		if( !debugger ) err( "Error launching debugger" );
+	// 	}
+  //
+	// 	if( !veryquiet ) cout<<"Executing..."<<endl;
+  //
+	// 	runtimeLib->execute( (void(*)())entry,args.c_str(),debugger );
+  //
+	// 	if( dbgHandle ) FreeLibrary( dbgHandle );
+	// }
 
-		HMODULE dbgHandle=0;
-		Debugger *debugger=0;
-
-		if( debug ){
-			dbgHandle=LoadLibrary( (home+"/bin/debugger.dll").c_str() );
-			if( dbgHandle ){
-				typedef Debugger *(_cdecl*GetDebugger)( Module*,Environ* );
-				GetDebugger gd=(GetDebugger)GetProcAddress( dbgHandle,"debuggerGetDebugger" );
-				if( gd ) debugger=gd( module,env );
-			}
-			if( !debugger ) err( "Error launching debugger" );
-		}
-
-		if( !veryquiet ) cout<<"Executing..."<<endl;
-
-		runtimeLib->execute( (void(*)())entry,args.c_str(),debugger );
-
-		if( dbgHandle ) FreeLibrary( dbgHandle );
-	}
-
-	delete module;
+	// delete module;
 	delete env;
 
 	closeLibs();

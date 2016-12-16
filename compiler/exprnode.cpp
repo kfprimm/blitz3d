@@ -39,14 +39,17 @@ ExprNode *CastNode::semant( Environ *e ){
 // Cast an expression to a type //
 //////////////////////////////////
 TNode *CastNode::translate( Codegen *g ){
+
 	TNode *t=expr->translate( g );
 	if( expr->sem_type==Type::float_type && sem_type==Type::int_type ){
 		//float->int
-		return d_new TNode( IR_CAST,t,0 );
+		cout<<"float->int"<<endl;
+		return d_new TNode( g->builder.CreateFPToSI( t->value,g->intType() ) );
 	}
 	if( expr->sem_type==Type::int_type && sem_type==Type::float_type ){
 		//int->float
-		return d_new TNode( IR_FCAST,t,0 );
+		cout<<"int->float"<<endl;
+		return d_new TNode( g->builder.CreateSIToFP( t->value,g->floatType() ) );
 	}
 	if( expr->sem_type==Type::string_type && sem_type==Type::int_type ){
 		//str->int
@@ -89,7 +92,7 @@ TNode *ExprSeqNode::translate( Codegen *g,bool cfunc ){
 		if( cfunc ){
 			Type *ty=exprs[k]->sem_type;
 			if( ty->stringType() ){
-				q=call( "__bbStrToCStr",q );
+				q=call( "_bbStrToCStr",q );
 			}else if( ty->structType() ){
 				q=d_new TNode( IR_MEM,q );
 			}else if( ty==Type::void_type ){
@@ -107,6 +110,32 @@ TNode *ExprSeqNode::translate( Codegen *g,bool cfunc ){
 		l=p;
 	}
 	return t;
+}
+
+vector<llvm::Value *> ExprSeqNode::toValues( Codegen *g,bool cfunc ){
+	vector<llvm::Value *> values;
+	for( int k=0;k<exprs.size();++k ){
+		TNode *q=exprs[k]->translate(g);
+
+		// auto s=g->builder.CreateAlloca( q->value->getType() );
+		// q=d_new TNode( g->builder.CreateStore( q->value,s ) );
+
+		if( cfunc ){
+			Type *ty=exprs[k]->sem_type;
+			if( ty->stringType() ){
+				q=d_new TNode( g->callLib( "bbStrToCStr",g->cstrType(),1,q->value ) );
+			}else if( ty->structType() ){
+				q=d_new TNode( IR_MEM,q );
+			}else if( ty==Type::void_type ){
+				q=d_new TNode( IR_MEM,add(q,iconst(4)) );
+			}
+		}
+
+		// q=d_new TNode( s ); // g->builder.CreateStore( q->value,s ) );
+
+		values.push_back( q->value );
+	}
+	return values;
 }
 
 void ExprSeqNode::castTo( DeclSeq *decls,Environ *e,bool cfunc ){
@@ -158,30 +187,37 @@ ExprNode *CallNode::semant( Environ *e ){
 }
 
 TNode *CallNode::translate( Codegen *g ){
+	auto *func = g->findFunc( ident );
 
 	FuncType *f=sem_decl->type->funcType();
 
-	TNode *t;
-	TNode *l=global( "_f"+ident );
-	TNode *r=exprs->translate( g,f->cfunc );
+	auto call=g->builder.CreateCall( func,exprs->toValues( g,f->cfunc ) );
 
-	if( f->userlib ){
-		l=d_new TNode( IR_MEM,l );
-		usedfuncs.insert( ident );
-	}
+	return d_new TNode(call);
 
-	if( sem_type==Type::float_type ){
-		t=d_new TNode( IR_FCALL,l,r,exprs->size()*4 );
-	}else{
-		t=d_new TNode( IR_CALL,l,r,exprs->size()*4 );
-	}
-
-	if( f->returnType->stringType() ){
-		if( f->cfunc ){
-			t=call( "__bbCStrToStr",t );
-		}
-	}
-	return t;
+	// FuncType *f=sem_decl->type->funcType();
+	//
+	// TNode *t;
+	// TNode *l=global( "_f"+ident );
+	// TNode *r=exprs->translate( g,f->cfunc );
+	//
+	// if( f->userlib ){
+	// 	l=d_new TNode( IR_MEM,l );
+	// 	usedfuncs.insert( ident );
+	// }
+	//
+	// if( sem_type==Type::float_type ){
+	// 	t=d_new TNode( IR_FCALL,l,r,exprs->size()*4 );
+	// }else{
+	// 	t=d_new TNode( IR_CALL,l,r,exprs->size()*4 );
+	// }
+	//
+	// if( f->returnType->stringType() ){
+	// 	if( f->cfunc ){
+	// 		t=call( "__bbCStrToStr",t );
+	// 	}
+	// }
+	// return t;
 }
 
 /////////////////////////
@@ -208,7 +244,8 @@ IntConstNode::IntConstNode( int n ):value(n){
 }
 
 TNode *IntConstNode::translate( Codegen *g ){
-	return d_new TNode( IR_CONST,0,0,value );
+	// return d_new TNode( IR_CONST,0,0,value );
+	return d_new TNode(llvm::ConstantInt::getSigned( g->intType(),value ));
 }
 
 int IntConstNode::intValue(){
@@ -231,19 +268,21 @@ FloatConstNode::FloatConstNode( float f ):value(f){
 }
 
 TNode *FloatConstNode::translate( Codegen *g ){
-	return d_new TNode( IR_CONST,0,0,*(int*)&value );
+	// return d_new TNode( IR_CONST,0,0,*(int*)&value );
+	return d_new TNode(llvm::ConstantFP::get( g->floatType(),value ));
 }
 
 int FloatConstNode::intValue(){
-	float flt=value;
-	int temp;
-	_control87( _RC_NEAR|_PC_24|_EM_INVALID|_EM_ZERODIVIDE|_EM_OVERFLOW|_EM_UNDERFLOW|_EM_INEXACT|_EM_DENORMAL,0xfffff );
-	_asm{
-		fld [flt];
-		fistp [temp];
-	}
-	_control87( _CW_DEFAULT,0xfffff );
-	return temp;
+	// float flt=value;
+	// int temp;
+	// _control87( _RC_NEAR|_PC_24|_EM_INVALID|_EM_ZERODIVIDE|_EM_OVERFLOW|_EM_UNDERFLOW|_EM_INEXACT|_EM_DENORMAL,0xfffff );
+	// _asm{
+	// 	fld [flt];
+	// 	fistp [temp];
+	// }
+	// _control87( _CW_DEFAULT,0xfffff );
+	// return temp;
+	return value;
 }
 
 float FloatConstNode::floatValue(){
@@ -262,9 +301,13 @@ StringConstNode::StringConstNode( const string &s ):value(s){
 }
 
 TNode *StringConstNode::translate( Codegen *g ){
-	string lab=genLabel();
-	g->s_data( value,lab );
-	return call( "__bbStrConst",global( lab ) );
+	// string lab=genLabel();
+	// g->s_data( value,lab );
+	// return call( "__bbStrConst",global( lab ) );
+
+	auto v=g->builder.CreateGlobalStringPtr( value,"STR" );
+
+	return d_new TNode( g->callLib( "_bbStrConst",g->stringType(),1,v ) );
 }
 
 int StringConstNode::intValue(){
@@ -425,24 +468,24 @@ TNode *ArithExprNode::translate( Codegen *g ){
 	TNode *l=lhs->translate( g );
 	TNode *r=rhs->translate( g );
 	if( sem_type==Type::string_type ){
-		return call( "__bbStrConcat",l,r );
+		return d_new TNode( g->callLib( "_bbStrConcat",g->stringType(),2,l->value,r->value ) );
 	}
-	int n=0;
+	llvm::Instruction::BinaryOps n;
 	if( sem_type==Type::int_type ){
 		switch( op ){
-		case '+':n=IR_ADD;break;case '-':n=IR_SUB;break;
-		case '*':n=IR_MUL;break;case '/':n=IR_DIV;break;
-		case MOD:return call( "__bbMod",l,r );
+		case '+':n=llvm::Instruction::Add;break;case '-':n=llvm::Instruction::Sub;break;
+		case '*':n=llvm::Instruction::Mul;break;case '/':n=llvm::Instruction::FDiv;break;
+		// case MOD:return call( "__bbMod",l,r );
 		}
 	}else{
 		switch( op ){
-		case '+':n=IR_FADD;break;case '-':n=IR_FSUB;break;
-		case '*':n=IR_FMUL;break;case '/':n=IR_FDIV;break;
-		case MOD:return fcall( "__bbFMod",l,r );
-		case '^':return fcall( "__bbFPow",l,r );
+			case '+':n=llvm::Instruction::FAdd;break;case '-':n=llvm::Instruction::FSub;break;
+			case '*':n=llvm::Instruction::FMul;break;case '/':n=llvm::Instruction::FDiv;break;
+	// 	case MOD:return fcall( "__bbFMod",l,r );
+	// 	case '^':return fcall( "__bbFPow",l,r );
 		}
 	}
-	return d_new TNode( n,l,r );
+	return d_new TNode( g->builder.CreateBinOp( n,l->value,r->value ) );
 }
 
 /////////////////////////

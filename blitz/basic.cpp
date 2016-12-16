@@ -1,9 +1,14 @@
 
-#include "std.h"
-#include "bbsys.h"
+#include "basic.h"
+#include "../stdutil/stdutil.h"
+#include "ex.h"
+#include <map>
+#include <math.h>
 
-#include "../gxruntime/gxruntime.h"
-extern gxRuntime *gx_runtime;
+using namespace std;
+
+// #include "../gxruntime/gxruntime.h"
+// extern gxRuntime *gx_runtime;
 
 //how many strings allocated
 static int stringCnt;
@@ -36,10 +41,10 @@ static int next_handle;
 static map<int,BBObj*> handle_map;
 static map<BBObj*,int> object_map;
 
-static BBType _bbIntType( BBTYPE_INT );
-static BBType _bbFltType( BBTYPE_FLT );
-static BBType _bbStrType( BBTYPE_STR );
-static BBType _bbCStrType( BBTYPE_CSTR );
+BBType _bbIntType( BBTYPE_INT );
+BBType _bbFltType( BBTYPE_FLT );
+BBType _bbStrType( BBTYPE_STR );
+BBType _bbCStrType( BBTYPE_CSTR );
 
 static void *bbMalloc( int size ){
 	return malloc(size);
@@ -124,6 +129,8 @@ BBStr::~BBStr(){
 	--stringCnt;
 }
 
+extern "C" {
+
 BBStr * BBCALL _bbStrLoad( BBStr **var ){
 	return *var ? d_new BBStr( **var ) : d_new BBStr();
 }
@@ -164,7 +171,8 @@ BBStr * BBCALL _bbStrFromFloat( float n ){
 }
 
 BBStr * BBCALL _bbStrConst( const char *s ){
-	return d_new BBStr( s );
+	cout<<"bbstr*: "<<s<<endl;
+	return (BBStr *)new string( "test" );
 }
 
 void * BBCALL _bbVecAlloc( BBVecType *type ){
@@ -507,9 +515,9 @@ float BBCALL _bbFPow( float x,float y ){
 }
 
 void BBCALL bbRuntimeStats(){
-	gx_runtime->debugLog( ("Active strings :"+itoa(stringCnt)).c_str() );
-	gx_runtime->debugLog( ("Active objects :"+itoa(objCnt)).c_str() );
-	gx_runtime->debugLog( ("Unreleased objs:"+itoa(unrelObjCnt)).c_str() );
+	// gx_runtime->debugLog( ("Active strings :"+itoa(stringCnt)).c_str() );
+	// gx_runtime->debugLog( ("Active objects :"+itoa(objCnt)).c_str() );
+	// gx_runtime->debugLog( ("Unreleased objs:"+itoa(unrelObjCnt)).c_str() );
 	/*
 	clog<<"Active strings:"<<stringCnt<<endl;
 	clog<<"Active objects:"<<objCnt<<endl;
@@ -518,6 +526,8 @@ void BBCALL bbRuntimeStats(){
 		clog<<"string@"<<(void*)t<<endl;
 	}
 	*/
+}
+
 }
 
 bool basic_create(){
@@ -540,58 +550,57 @@ bool basic_destroy(){
 }
 
 void basic_link( void (*rtSym)( const char *sym,void *pc ) ){
-
-	rtSym( "_bbIntType",&_bbIntType );
-	rtSym( "_bbFltType",&_bbFltType );
-	rtSym( "_bbStrType",&_bbStrType );
-	rtSym( "_bbCStrType",&_bbCStrType );
-
-	rtSym( "_bbStrLoad",_bbStrLoad );
-	rtSym( "_bbStrRelease",_bbStrRelease );
-	rtSym( "_bbStrStore",_bbStrStore );
-	rtSym( "_bbStrCompare",_bbStrCompare );
-	rtSym( "_bbStrConcat",_bbStrConcat );
-	rtSym( "_bbStrToInt",_bbStrToInt );
-	rtSym( "_bbStrFromInt",_bbStrFromInt );
-	rtSym( "_bbStrToFloat",_bbStrToFloat );
-	rtSym( "_bbStrFromFloat",_bbStrFromFloat );
-	rtSym( "_bbStrConst",_bbStrConst );
-	rtSym( "_bbDimArray",_bbDimArray );
-	rtSym( "_bbUndimArray",_bbUndimArray );
-	rtSym( "_bbArrayBoundsEx",_bbArrayBoundsEx );
-	rtSym( "_bbVecAlloc",_bbVecAlloc );
-	rtSym( "_bbVecFree",_bbVecFree );
-	rtSym( "_bbVecBoundsEx",_bbVecBoundsEx );
-	rtSym( "_bbObjNew",_bbObjNew );
-	rtSym( "_bbObjDelete",_bbObjDelete );
-	rtSym( "_bbObjDeleteEach",_bbObjDeleteEach );
-	rtSym( "_bbObjRelease",_bbObjRelease );
-	rtSym( "_bbObjStore",_bbObjStore );
-	rtSym( "_bbObjCompare",_bbObjCompare );
-	rtSym( "_bbObjNext",_bbObjNext );
-	rtSym( "_bbObjPrev",_bbObjPrev );
-	rtSym( "_bbObjFirst",_bbObjFirst );
-	rtSym( "_bbObjLast",_bbObjLast );
-	rtSym( "_bbObjInsBefore",_bbObjInsBefore );
-	rtSym( "_bbObjInsAfter",_bbObjInsAfter );
-	rtSym( "_bbObjEachFirst",_bbObjEachFirst );
-	rtSym( "_bbObjEachNext",_bbObjEachNext );
-	rtSym( "_bbObjEachFirst2",_bbObjEachFirst2 );
-	rtSym( "_bbObjEachNext2",_bbObjEachNext2 );
-	rtSym( "_bbObjToStr",_bbObjToStr );
-	rtSym( "_bbObjToHandle",_bbObjToHandle );
-	rtSym( "_bbObjFromHandle",_bbObjFromHandle );
-	rtSym( "_bbNullObjEx",_bbNullObjEx );
-	rtSym( "_bbRestore",_bbRestore );
-	rtSym( "_bbReadInt",_bbReadInt );
-	rtSym( "_bbReadFloat",_bbReadFloat );
-	rtSym( "_bbReadStr",_bbReadStr );
-	rtSym( "_bbAbs",_bbAbs );
-	rtSym( "_bbSgn",_bbSgn );
-	rtSym( "_bbMod",_bbMod );
-	rtSym( "_bbFAbs",_bbFAbs );
-	rtSym( "_bbFSgn",_bbFSgn );
-	rtSym( "_bbFMod",_bbFMod );
-	rtSym( "_bbFPow",_bbFPow );
-	rtSym( "RuntimeStats",bbRuntimeStats );
+	// rtSym( "_bbIntType",&_bbIntType );
+	// rtSym( "_bbFltType",&_bbFltType );
+	// rtSym( "_bbStrType",&_bbStrType );
+	// rtSym( "_bbCStrType",&_bbCStrType );
+	//
+	// rtSym( "_bbStrLoad",_bbStrLoad );
+	// rtSym( "_bbStrRelease",_bbStrRelease );
+	// rtSym( "_bbStrStore",_bbStrStore );
+	// rtSym( "_bbStrCompare",_bbStrCompare );
+	// rtSym( "_bbStrConcat",_bbStrConcat );
+	// rtSym( "_bbStrToInt",_bbStrToInt );
+	// rtSym( "_bbStrFromInt",_bbStrFromInt );
+	// rtSym( "_bbStrToFloat",_bbStrToFloat );
+	// rtSym( "_bbStrFromFloat",_bbStrFromFloat );
+	// rtSym( "_bbStrConst",_bbStrConst );
+	// rtSym( "_bbDimArray",_bbDimArray );
+	// rtSym( "_bbUndimArray",_bbUndimArray );
+	// rtSym( "_bbArrayBoundsEx",_bbArrayBoundsEx );
+	// rtSym( "_bbVecAlloc",_bbVecAlloc );
+	// rtSym( "_bbVecFree",_bbVecFree );
+	// rtSym( "_bbVecBoundsEx",_bbVecBoundsEx );
+	// rtSym( "_bbObjNew",_bbObjNew );
+	// rtSym( "_bbObjDelete",_bbObjDelete );
+	// rtSym( "_bbObjDeleteEach",_bbObjDeleteEach );
+	// rtSym( "_bbObjRelease",_bbObjRelease );
+	// rtSym( "_bbObjStore",_bbObjStore );
+	// rtSym( "_bbObjCompare",_bbObjCompare );
+	// rtSym( "_bbObjNext",_bbObjNext );
+	// rtSym( "_bbObjPrev",_bbObjPrev );
+	// rtSym( "_bbObjFirst",_bbObjFirst );
+	// rtSym( "_bbObjLast",_bbObjLast );
+	// rtSym( "_bbObjInsBefore",_bbObjInsBefore );
+	// rtSym( "_bbObjInsAfter",_bbObjInsAfter );
+	// rtSym( "_bbObjEachFirst",_bbObjEachFirst );
+	// rtSym( "_bbObjEachNext",_bbObjEachNext );
+	// rtSym( "_bbObjEachFirst2",_bbObjEachFirst2 );
+	// rtSym( "_bbObjEachNext2",_bbObjEachNext2 );
+	// rtSym( "_bbObjToStr",_bbObjToStr );
+	// rtSym( "_bbObjToHandle",_bbObjToHandle );
+	// rtSym( "_bbObjFromHandle",_bbObjFromHandle );
+	// rtSym( "_bbNullObjEx",_bbNullObjEx );
+	// rtSym( "_bbRestore",_bbRestore );
+	// rtSym( "_bbReadInt",_bbReadInt );
+	// rtSym( "_bbReadFloat",_bbReadFloat );
+	// rtSym( "_bbReadStr",_bbReadStr );
+	// rtSym( "_bbAbs",_bbAbs );
+	// rtSym( "_bbSgn",_bbSgn );
+	// rtSym( "_bbMod",_bbMod );
+	// rtSym( "_bbFAbs",_bbFAbs );
+	// rtSym( "_bbFSgn",_bbFSgn );
+	// rtSym( "_bbFMod",_bbFMod );
+	// rtSym( "_bbFPow",_bbFPow );
+	// rtSym( "RuntimeStats",bbRuntimeStats );
 }

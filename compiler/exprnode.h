@@ -26,6 +26,7 @@ struct ExprSeqNode : public Node{
 	int  size(){ return exprs.size(); }
 	void semant( Environ *e );
 	TNode *translate( Codegen *g,bool userlib );
+	vector<llvm::Value *> toValues( Codegen *g,bool cfunc );
 	void castTo( DeclSeq *ds,Environ *e,bool userlib );
 	void castTo( Type *t,Environ *e );
 };

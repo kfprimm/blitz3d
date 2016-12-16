@@ -16,6 +16,4 @@
 
 using namespace std;
 
-#include <windows.h>
-
 #endif

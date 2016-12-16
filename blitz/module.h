@@ -1,7 +1,11 @@
 #ifndef BBMODULE_H
 #define BBMODULE_H
 
+#ifdef WIN32
 #define BBCALL __stdcall
+#else
+#define BBCALL
+#endif
 
 #define BBMODULE_FUNC_NAME( name,action ) name##_##action
 

@@ -66,32 +66,34 @@ int Node::enumVars( Environ *e ){
 //////////////////////////////
 // initialize all vars to 0 //
 //////////////////////////////
-TNode *Node::createVars( Environ *e ){
-	int k;
-	TNode *t=0;
-	//initialize locals
-	for( k=0;k<e->decls->size();++k ){
-		Decl *d=e->decls->decls[k];
-		if( d->kind!=DECL_LOCAL ) continue;
-		if( d->type->vectorType() ) continue;
-		if( !t ) t=d_new TNode( IR_CONST,0,0,0 );
-		TNode *p=d_new TNode( IR_LOCAL,0,0,d->offset );
-		p=d_new TNode( IR_MEM,p,0 );
-		t=d_new TNode( IR_MOVE,t,p );
-	}
-	//initialize vectors
-	for( k=0;k<e->decls->size();++k ){
-		Decl *d=e->decls->decls[k];
-		if( d->kind==DECL_PARAM ) continue;
-		VectorType *v=d->type->vectorType();
-		if( !v ) continue;
-		TNode *p=call( "__bbVecAlloc",global( v->label ) );
-		TNode *m=d->kind==DECL_GLOBAL ? global( "_v"+d->name ) : local( d->offset );
-		p=move( p,mem( m ) );
-		if( t ) t=seq( t,p );
-		else t=p;
-	}
-	return t;
+TNode *Node::createVars( Codegen *g,Environ *e ){
+	g->env=e;
+
+	// int k;
+	// TNode *t=0;
+	// //initialize locals
+	// for( k=0;k<e->decls->size();++k ){
+	// 	Decl *d=e->decls->decls[k];
+	// 	if( d->kind!=DECL_LOCAL ) continue;
+	// 	if( d->type->vectorType() ) continue;
+	// 	if( !t ) t=d_new TNode( IR_CONST,0,0,0 );
+	// 	TNode *p=d_new TNode( IR_LOCAL,0,0,d->offset );
+	// 	p=d_new TNode( IR_MEM,p,0 );
+	// 	t=d_new TNode( IR_MOVE,t,p );
+	// }
+	// //initialize vectors
+	// for( k=0;k<e->decls->size();++k ){
+	// 	Decl *d=e->decls->decls[k];
+	// 	if( d->kind==DECL_PARAM ) continue;
+	// 	VectorType *v=d->type->vectorType();
+	// 	if( !v ) continue;
+	// 	TNode *p=call( "__bbVecAlloc",global( v->label ) );
+	// 	TNode *m=d->kind==DECL_GLOBAL ? global( "_v"+d->name ) : local( d->offset );
+	// 	p=move( p,mem( m ) );
+	// 	if( t ) t=seq( t,p );
+	// 	else t=p;
+	// }
+	// return t;
 }
 
 ////////////////////////
@@ -281,4 +283,3 @@ TNode *Node::jumpf( TNode *expr,const string &s ){
 TNode *Node::jumpge( TNode *l,TNode *r,const string &s ){
 	return d_new TNode( IR_JUMPGE,l,r,s );
 }
-

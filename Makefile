@@ -1,2 +1,4 @@
-all:
+*:
 	cd build && make ${ARGS}
+
+.PHONY: *

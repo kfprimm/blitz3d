@@ -31,7 +31,7 @@ struct Node{
 	static int enumVars( Environ *e );
 	static Type *tagType( const string &s,Environ *e );
 
-	static TNode *createVars( Environ *e );
+	static TNode *createVars( Codegen *g, Environ *e );
 	static TNode *deleteVars( Environ *e );
 
 	static TNode *seq( TNode *l,TNode *r );

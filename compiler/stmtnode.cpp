@@ -6,9 +6,19 @@ static string fileLabel;
 static map<string,string> fileMap;
 
 void StmtNode::debug( int pos,Codegen *g ){
+	static llvm::Function *debugStmt=0;
+
 	if( g->debug ){
-		TNode *t=fileLabel.size() ? global( fileLabel ) : iconst(0);
-		g->code( call( "__bbDebugStmt",iconst( pos ),t ) );
+		// TNode *t=fileLabel.size() ? global( fileLabel ) : iconst(0);
+		// g->code( call( "__bbDebugStmt",iconst( pos ),t ) );
+
+		if( !debugStmt ){
+			vector<llvm::Type *> args;
+			llvm::FunctionType *proto = llvm::FunctionType::get( g->voidType(),args,false );
+			debugStmt=llvm::Function::Create( proto,llvm::Function::InternalLinkage,"__bbDebugStmt",g->module );
+		}
+
+		g->builder.CreateCall( debugStmt );
 	}
 }
 
@@ -142,6 +152,8 @@ void AssNode::semant( Environ *e ){
 }
 
 void AssNode::translate( Codegen *g ){
+	// g->builder.CreateLoad( expr->translate( g )->value, "test" );
+	// g->builder.CreateLoad( llvm::ConstantInt::getSigned( g->intType(),5 ), "test" );
 	g->code( var->store( g,expr->translate( g ) ) );
 }
 
@@ -154,8 +166,8 @@ void ExprStmtNode::semant( Environ *e ){
 
 void ExprStmtNode::translate( Codegen *g ){
 	TNode *t=expr->translate( g );
-	if( expr->sem_type==Type::string_type ) t=call( "__bbStrRelease",t );
-	g->code( t );
+	// if( expr->sem_type==Type::string_type ) t=call( "__bbStrRelease",t );
+	// g->code( t );
 }
 
 ////////////////
@@ -426,18 +438,19 @@ void ReturnNode::semant( Environ *e ){
 }
 
 void ReturnNode::translate( Codegen *g ){
-	if( !expr ){
-		g->code( d_new TNode( IR_RET,0,0 ) );
-		return;
-	}
-
-	TNode *t=expr->translate( g );
-
-	if( expr->sem_type==Type::float_type ){
-		g->code( d_new TNode( IR_FRETURN,t,0,returnLabel ) );
-	}else{
-		g->code( d_new TNode( IR_RETURN,t,0,returnLabel ) );
-	}
+	g->builder.CreateRet( expr->translate( g )->value );
+	// if( !expr ){
+	// 	g->code( d_new TNode( IR_RET,0,0 ) );
+	// 	return;
+	// }
+	//
+	// TNode *t=expr->translate( g );
+	//
+	// if( expr->sem_type==Type::float_type ){
+	// 	g->code( d_new TNode( IR_FRETURN,t,0,returnLabel ) );
+	// }else{
+	// 	g->code( d_new TNode( IR_RETURN,t,0,returnLabel ) );
+	// }
 }
 
 //////////////////////
